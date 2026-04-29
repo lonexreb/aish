@@ -1,6 +1,6 @@
 {
   "name": "aish",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Agentic GPU cloud control plane for Claude Code: TensorDock + Modal MCP servers, GPU detection, and ML workflow subagents.",
   "author": {
     "name": "Shubhankar (lonexreb)",
