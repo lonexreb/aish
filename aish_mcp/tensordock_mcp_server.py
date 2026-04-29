@@ -24,9 +24,9 @@ from typing import Any
 import httpx
 from mcp.server.fastmcp import FastMCP
 
-from mcp._logging import get_logger
-from mcp._redact import redact, redact_dict
-from mcp._validation import (
+from aish_mcp._logging import get_logger
+from aish_mcp._redact import redact, redact_dict
+from aish_mcp._validation import (
     ValidationError,
     validate_choice,
     validate_gpu_model,

@@ -45,15 +45,15 @@ Repository = "https://github.com/lonexreb/aish"
 Issues = "https://github.com/lonexreb/aish/issues"
 
 [project.scripts]
-aish-tensordock = "aish.mcp.tensordock_mcp_server:main"
-aish-modal = "aish.mcp.modal_mcp_server:main"
+aish-tensordock = "aish_mcp.tensordock_mcp_server:main"
+aish-modal = "aish_mcp.modal_mcp_server:main"
 
 [tool.setuptools]
-packages = ["aish", "aish.mcp"]
-package-dir = { "aish" = "src/aish", "aish.mcp" = "mcp" }
+# The plugin is invoked by Claude Code via .mcp.json — pip install is dev-only.
+packages = ["aish_mcp"]
 
 [tool.ruff]
-line-length = 100
+line-length = 110
 target-version = "py311"
 
 [tool.ruff.lint]
@@ -62,6 +62,10 @@ ignore = ["S101"]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["S"]
+# detect.py uses `nvidia-smi` and `system_profiler` by name after a shutil.which
+# guard. We trust PATH because the alternative (hardcoded absolute paths) breaks
+# cross-distro compatibility. The `which` check is the security boundary.
+"skills/gpu-detect/detect.py" = ["S603", "S607"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
@@ -73,7 +77,7 @@ exclude_dirs = ["tests", ".venv", "build", "dist"]
 skips = ["B101"]
 
 [tool.coverage.run]
-source = ["mcp", "src/aish"]
+source = ["aish_mcp"]
 omit = ["tests/*"]
 
 [tool.coverage.report]

@@ -1,0 +1,93 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: lint + test (py${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Ruff
+        run: ruff check aish_mcp/ tests/ skills/
+
+      - name: Bandit
+        run: bandit -q -r aish_mcp/ skills/ -c pyproject.toml
+
+      - name: Pytest
+        env:
+          AISH_LOG_LEVEL: WARNING
+        run: pytest --cov --cov-report=term-missing
+
+      - name: No-shell=True guard
+        run: |
+          ! grep -RIn --include='*.py' 'shell\s*=\s*True' aish_mcp/ skills/ scripts/
+
+  audit:
+    name: pip-audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install pip-audit + project
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev,modal]"
+          pip install pip-audit==2.7.3
+      - name: Run pip-audit
+        run: pip-audit --strict --skip-editable
+
+  validate-plugin-manifests:
+    name: validate plugin.json + marketplace.json
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Validate JSON
+        run: |
+          python -c "import json; json.load(open('.claude-plugin/plugin.json'))"
+          python -c "import json; json.load(open('.claude-plugin/marketplace.json'))"
+          python -c "import json; json.load(open('.mcp.json'))"
+      - name: Required fields in plugin.json
+        run: |
+          python -c "
+          import json, sys
+          m = json.load(open('.claude-plugin/plugin.json'))
+          required = ['name', 'version', 'description', 'author', 'license', 'repository']
+          missing = [k for k in required if k not in m]
+          if missing:
+              print(f'plugin.json missing required fields: {missing}')
+              sys.exit(1)
+          "

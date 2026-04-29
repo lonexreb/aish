@@ -26,9 +26,9 @@ from typing import Any
 
 from mcp.server.fastmcp import FastMCP
 
-from mcp._logging import get_logger
-from mcp._redact import redact
-from mcp._validation import (
+from aish_mcp._logging import get_logger
+from aish_mcp._redact import redact
+from aish_mcp._validation import (
     ValidationError,
     validate_choice,
     validate_env_key,
@@ -94,7 +94,7 @@ async def _run(argv: list[str], timeout: float = DEFAULT_TIMEOUT) -> dict:
     )
     try:
         stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=timeout)
-    except asyncio.TimeoutError:
+    except TimeoutError:
         log.warning("subprocess timeout after %.0fs: %s", timeout, argv[0])
         try:
             proc.kill()

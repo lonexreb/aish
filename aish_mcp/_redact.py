@@ -13,7 +13,8 @@ import re
 
 # Patterns that match common secret formats. These are intentionally broad —
 # false-positive redaction is fine; the cost of a missed secret is high.
-_BEARER_RE = re.compile(r"(?i)(authorization\s*:\s*bearer\s+)[A-Za-z0-9._\-+/=]{8,}")
+_AUTH_HEADER_RE = re.compile(r"(?i)(authorization\s*:\s*bearer\s+)[A-Za-z0-9._\-+/=]{4,}")
+_BEARER_INLINE_RE = re.compile(r"(?i)(\bbearer\s+)[A-Za-z0-9._\-+/=]{4,}")
 _TOKEN_RE = re.compile(r"\b(tdk|sk|hf|wandb|gho|ghp|ghs|ghu|github_pat)_[A-Za-z0-9_\-]{16,}")
 _GENERIC_LONG_HEX_RE = re.compile(r"\b[A-Fa-f0-9]{32,}\b")
 _HEADER_VALUE_RE = re.compile(
@@ -28,7 +29,8 @@ def redact(text: str) -> str:
     """
     if not isinstance(text, str):
         text = str(text)
-    text = _BEARER_RE.sub(r"\1***REDACTED***", text)
+    text = _AUTH_HEADER_RE.sub(r"\1***REDACTED***", text)
+    text = _BEARER_INLINE_RE.sub(r"\1***REDACTED***", text)
     text = _HEADER_VALUE_RE.sub(r"\1: ***REDACTED***", text)
     text = _TOKEN_RE.sub("***REDACTED***", text)
     text = _GENERIC_LONG_HEX_RE.sub("***REDACTED***", text)
