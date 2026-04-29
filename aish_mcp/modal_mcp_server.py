@@ -21,6 +21,7 @@ from __future__ import annotations
 import asyncio
 import json
 import os
+import re
 import shutil
 from typing import Any
 
@@ -36,6 +37,7 @@ from aish_mcp._validation import (
     validate_resource_name,
     validate_safe_path,
 )
+
 
 def _bounded_timeout(env_key: str, default: float, minimum: float = 1.0, maximum: float = 3600.0) -> float:
     """Same semantics as the TensorDock server's helper — keeps STOP-SHIP item 4
@@ -303,14 +305,12 @@ async def shell(
         if gpu is not None:
             validate_choice(gpu.upper(), ("T4", "A10G", "A100", "L4", "H100"), "gpu")
         if image is not None:
-            import re as _re
-
             if (
                 not isinstance(image, str)
                 or len(image) > 128
                 or "\x00" in image
                 or any(ord(c) < 0x20 for c in image)
-                or not _re.fullmatch(r"[a-zA-Z0-9][a-zA-Z0-9_.\-:/]*", image)
+                or not re.fullmatch(r"[a-zA-Z0-9][a-zA-Z0-9_.\-:/]*", image)
             ):
                 raise ValidationError(
                     "image must match OCI ref [a-zA-Z0-9][a-zA-Z0-9_.:-/]+ (<=128 chars, no controls)"

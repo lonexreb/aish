@@ -73,12 +73,12 @@ References:
   "mcpServers": {
     "aish-tensordock": {
       "command": "python3",
-      "args": ["${CLAUDE_PLUGIN_ROOT}/mcp/tensordock_mcp_server.py"],
+      "args": ["${CLAUDE_PLUGIN_ROOT}/aish_mcp/tensordock_mcp_server.py"],
       "env": { "TENSORDOCK_API_TOKEN": "${TENSORDOCK_API_TOKEN}" }
     },
     "aish-modal": {
       "command": "python3",
-      "args": ["${CLAUDE_PLUGIN_ROOT}/mcp/modal_mcp_server.py"],
+      "args": ["${CLAUDE_PLUGIN_ROOT}/aish_mcp/modal_mcp_server.py"],
       "env": { "PATH": "${PATH}" }
     }
   }
@@ -98,7 +98,7 @@ Eight items must be green before any release. CI fails the build if any of them 
 
 - [ ] **No `shell=True` anywhere.** All subprocess calls use `asyncio.create_subprocess_exec(*argv)` with list-form arguments. Verified by `bandit B602/B603` and a project-specific grep test.
 - [ ] **Bearer tokens redacted in every error path.** Httpx exceptions are wrapped; `Authorization` and `X-API-*` headers are stripped before any string is returned to the model.
-- [ ] **Strict input validation at every `@mcp.tool()` boundary.** UUIDs, resource names, paths, and numeric ranges are validated by named helpers in `mcp/_validation.py`. No tool dispatches I/O on un-validated input.
+- [ ] **Strict input validation at every `@mcp.tool()` boundary.** UUIDs, resource names, paths, and numeric ranges are validated by named helpers in `aish_mcp/_validation.py`. No tool dispatches I/O on un-validated input.
 - [ ] **Hard timeouts + zombie prevention.** Every httpx call has a `timeout=` kwarg. Every subprocess uses `asyncio.wait_for` and on `TimeoutError` does `proc.kill(); await proc.wait()`.
 - [ ] **Env-var-only secrets + startup validation.** `TENSORDOCK_API_TOKEN` is read from `os.environ` once at server boot; missing → `RuntimeError`. `.gitignore` blocks `.env`, `*.pem`, `*.token`. `.env.example` is the only `.env*` file in the repo.
 - [ ] **`pip-audit` and `bandit` blocking in CI.** PRs cannot merge with known-CVE deps or `bandit` HIGH findings.
@@ -111,13 +111,13 @@ Eight items must be green before any release. CI fails the build if any of them 
 
 | # | Control | aish status |
 | --- | --- | --- |
-| 4.1 | Validate every tool argument at the boundary (UUIDs, paths, ranges, enums) | implemented via `mcp/_validation.py` |
+| 4.1 | Validate every tool argument at the boundary (UUIDs, paths, ranges, enums) | implemented via `aish_mcp/_validation.py` |
 | 4.2 | Reject paths with `..`, NUL bytes, absolute escapes; resolve and re-check `is_relative_to(allowed_root)` | implemented |
 | 4.3 | Subprocess: `asyncio.create_subprocess_exec(*argv)`; never `shell=True` | implemented (modal server) |
 | 4.4 | Locate external binaries via `shutil.which()`; reject if not found | implemented (`_modal_bin()`) |
 | 4.5 | Hard timeout on every subprocess + `proc.kill()` on timeout to prevent zombies | implemented |
 | 4.6 | Hard timeout on every httpx call; `httpx.AsyncClient` as context manager so sockets close on error | implemented (tensordock server) |
-| 4.7 | Strip/redact `Authorization`, `X-API-*` headers from error strings | implemented via `mcp/_redact.py` |
+| 4.7 | Strip/redact `Authorization`, `X-API-*` headers from error strings | implemented via `aish_mcp/_redact.py` |
 | 4.8 | Catch `httpx.HTTPStatusError`; return `{status, code, message}` — never `repr(exc)` | implemented |
 | 4.9 | Enforce HTTPS for the TensorDock base URL; reject `http://` or redirects to private/loopback IPs (SSRF) | implemented |
 | 4.10 | Stdio transport only — no HTTP/SSE | enforced by `mcp.run()` defaults |
@@ -161,7 +161,7 @@ Exit-code semantics inversion is a documented Claude Code footgun: code `2` bloc
 | --- | --- |
 | Pin all deps with hashes (`uv pip compile --generate-hashes` or `pip-compile --generate-hashes`) | scheduled phase 6 |
 | `pip-audit` in CI on every PR; fail on known CVEs | scheduled phase 6 |
-| `bandit -r mcp/ src/` in CI; fail on HIGH severity | scheduled phase 6 |
+| `bandit -r aish_mcp/ src/` in CI; fail on HIGH severity | scheduled phase 6 |
 | Pin Python in `pyproject.toml` to `>=3.11,<3.13` | done |
 | Sign release tags (`git tag -s`); upload SBOM (`cyclonedx-py`) to GitHub Release | scheduled phase 7 |
 | Generate provenance attestation via [GitHub Attestations](https://docs.github.com/en/actions/security-guides/using-artifact-attestations-to-establish-provenance-for-builds) | scheduled phase 7 |
@@ -198,7 +198,7 @@ Exit-code semantics inversion is a documented Claude Code footgun: code `2` bloc
 - Unit tests for every MCP tool. External calls are mocked (`respx` for httpx, `unittest.mock` for `asyncio.create_subprocess_exec`). No test is allowed to reach a real API.
 - Coverage gate ≥ 70% with `pytest --cov`. Reviewers can run `pytest -q` from a fresh clone and have it pass.
 - Tests for both happy and error paths, including: token-redaction in errors, timeout handling, missing-binary handling, malformed responses, validation rejections.
-- Security-specific tests: a regex test asserts `shell=True` does not appear anywhere in `mcp/`.
+- Security-specific tests: a regex test asserts `shell=True` does not appear anywhere in `aish_mcp/`.
 
 ---
 

@@ -14,8 +14,8 @@
 
 ### From `gpu-cloud-mcp`
 
-- **`tensordock_mcp_server.py`** — moved into `mcp/`, hardened against the 29 v1 requirements (UUID/path/range validation, token redaction, classified error handling).
-- **`modal_mcp_server.py`** — moved into `mcp/`, same hardening pass.
+- **`tensordock_mcp_server.py`** — moved into `aish_mcp/`, hardened against the 29 v1 requirements (UUID/path/range validation, token redaction, classified error handling).
+- **`modal_mcp_server.py`** — moved into `aish_mcp/`, same hardening pass.
 - **The 29 v1 requirements** themselves (ERR-01..05, VAL-01..05, TST-01..06, SEC-01..04, REL-01..05, QAL-01..04) — they're the acceptance criteria for [phase 3 in `PLAN.md`](../PLAN.md#phase-3--port-mcp-servers-tensordock--modal).
 - **The pinned dep philosophy** (`httpx==0.27.x`, `mcp[cli]==1.x`).
 
@@ -46,7 +46,7 @@
 
 - The Google-style docstrings in MCP tools come from `gpu-cloud-mcp`. FastMCP turns these into the JSON schema users see.
 - The `_format_size` / `_run` / `_modal_bin` helper pattern from `gpu-cloud-mcp/modal_mcp_server.py` is preserved.
-- The "tool layer / client layer / config layer" architecture description from `gpu-cloud-mcp/CLAUDE.md` is preserved as the architecture for `mcp/`.
+- The "tool layer / client layer / config layer" architecture description from `gpu-cloud-mcp/CLAUDE.md` is preserved as the architecture for `aish_mcp/`.
 
 ## What this means for reviewers
 

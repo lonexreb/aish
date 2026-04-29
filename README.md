@@ -21,11 +21,12 @@
 
 | Surface | What it does |
 | --- | --- |
-| **`aish-tensordock` MCP** | 10+ tools for raw GPU VMs — `list_locations`, `list_hostnodes`, `deploy_instance`, `start/stop/modify/delete_instance`, `set_password`, etc. Hits TensorDock REST API v2 via `httpx`. |
-| **`aish-modal` MCP** | 18+ tools for serverless GPU apps — `deploy_app`, `run_app`, `list_apps`, `app_logs`, volume management. Wraps the `modal` CLI via `asyncio` subprocess. |
+| **`aish-tensordock` MCP** | 10 tools for raw GPU VMs — `list_locations`, `list_hostnodes`, `list_instances`, `get_instance`, `deploy_instance`, `start_instance`, `stop_instance`, `modify_instance`, `delete_instance`, `get_ssh_command`. Hits TensorDock REST API v2 via `httpx`. |
+| **`aish-modal` MCP** | 18 tools for serverless GPU apps — `list_apps`, `deploy_app`, `run_app`, `stop_app`, `app_logs`, `shell`, `list_containers`, `list_volumes`, `create_volume`, `volume_ls/put/get`, `delete_volume`, `list_secrets`, `create_secret`, `list_environments`, `check_config`, `open_dashboard`. Wraps the `modal` CLI via `asyncio` subprocess. |
 | **`/aish:status`** slash command | One-shot health check across both providers. |
 | **`/aish:deploy-gpu`** slash command | Guided GPU provisioning workflow. |
 | **`/aish:modal-run`** slash command | Run a Modal function with a one-line description. |
+| **`/aish:hf-setup`** slash command | Plan a HuggingFace model/dataset environment without deploying. |
 | **`gpu-detect`** skill | Detect local GPU (NVIDIA / Apple Silicon / simulated fallback), CUDA capability lookup. |
 | **`hf-env-setup`** skill | Set up a HuggingFace model/dataset environment with the right CUDA + framework. |
 | **`gpu-operator`** subagent | Specialist for cost-optimal provisioning, hostnode selection, capacity planning. |

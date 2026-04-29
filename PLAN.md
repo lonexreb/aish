@@ -36,7 +36,7 @@ Outputs: [`ANTHROPIC-PLUGIN.md`](./ANTHROPIC-PLUGIN.md), [`docs/PRIOR-ART.md`](.
 | --- | --- |
 | ✅ | `.claude-plugin/plugin.json` (name, version, description, author, license, repository, keywords). |
 | ✅ | `.claude-plugin/marketplace.json` (single-plugin marketplace, strict mode). |
-| ✅ | `.mcp.json` referencing `${CLAUDE_PLUGIN_ROOT}/mcp/*.py` with env-var passthrough only. |
+| ✅ | `.mcp.json` referencing `${CLAUDE_PLUGIN_ROOT}/aish_mcp/*.py` with env-var passthrough only. |
 | ✅ | `pyproject.toml` (Python 3.11–3.12, pinned httpx + mcp + modal, dev extras: pytest, respx, ruff, bandit, pip-audit). |
 | ✅ | `.gitignore` blocks `.env`, `*.pem`, `*.token`, `*.key`, `~/.modal/`. |
 | ✅ | `.env.example` with placeholder TENSORDOCK_API_TOKEN. |
@@ -45,98 +45,104 @@ Outputs: [`ANTHROPIC-PLUGIN.md`](./ANTHROPIC-PLUGIN.md), [`docs/PRIOR-ART.md`](.
 
 ---
 
-## Phase 2 — Core docs ▶ in progress
+## Phase 2 — Core docs ✅
 
 | Done | Item |
 | --- | --- |
 | ✅ | `README.md` with banner, install steps, env-var table, examples, security summary. |
 | ✅ | `CLAUDE.md` working-agreement file for in-repo agents. |
 | ✅ | `PLAN.md` (this file). |
-| ⏳ | `ANTHROPIC-PLUGIN.md` — full best/secure-practices guide for marketplace acceptance. |
-| ⏳ | `SECURITY.md` — disclosure policy + reporting email + 90-day window. |
-| ⏳ | `CONTRIBUTING.md` — issue/PR flow, test/lint/audit commands. |
-| ⏳ | `CODE_OF_CONDUCT.md` — Contributor Covenant 2.1. |
-| ⏳ | `docs/PRIOR-ART.md` — what was carried over from AIsh, AIsh-v0, gpu-cloud-mcp; what was dropped and why. |
+| ✅ | `ANTHROPIC-PLUGIN.md` — full best/secure-practices guide for marketplace acceptance. |
+| ✅ | `SECURITY.md` — disclosure policy + reporting email + 90-day window. |
+| ✅ | `CONTRIBUTING.md` — issue/PR flow, test/lint/audit commands. |
+| ✅ | `CODE_OF_CONDUCT.md` — Contributor Covenant 2.1. |
+| ✅ | `docs/PRIOR-ART.md` — what was carried over from AIsh, AIsh-v0, gpu-cloud-mcp; what was dropped and why. |
 
 ---
 
-## Phase 3 — Port MCP servers (TensorDock + Modal)
+## Phase 3 — Port MCP servers (TensorDock + Modal) ✅
 
-| Item |
-| --- |
-| Move `tensordock_mcp_server.py` from `gpu-cloud-mcp` into `mcp/`, add input validation per the 29 testable requirements (ERR-01 → QAL-04 in the original `REQUIREMENTS.md`). |
-| Move `modal_mcp_server.py` likewise; ensure `_run()` uses `asyncio.create_subprocess_exec` (already does), add stricter timeout-tier table per tool. |
-| Add `mcp/_validation.py` with shared validators (UUID, resource name, path, numeric range). |
-| Add `mcp/_redact.py` with token-redaction helpers; wrap every error path. |
-| Add tool-level docstrings in Google style — FastMCP turns these into the JSON schema users see. |
-| Each tool must compose: `validate inputs → call → wrap error → return json.dumps(...)`. |
-
-Acceptance signal for this phase: the existing 29 v1 requirements all pass when re-read against the ported code, and `bandit -r mcp/` is clean.
-
----
-
-## Phase 4 — Skills
-
-| Skill | What it does |
+| Done | Item |
 | --- | --- |
-| `gpu-detect` | Port `hardware.py` from AIsh-v0 — NVIDIA via `nvidia-smi`, macOS via `system_profiler`, Apple Silicon, simulated fallback, CUDA capability lookup. |
-| `hf-env-setup` | Walk a HuggingFace model/dataset URL → recommend Python/CUDA/torch versions, generate a Modal app spec. |
+| ✅ | Moved `tensordock_mcp_server.py` from `gpu-cloud-mcp` into `aish_mcp/`, validation per the 29 v1 requirements. |
+| ✅ | Moved `modal_mcp_server.py` likewise; `_run()` uses `asyncio.create_subprocess_exec` with bounded per-tool timeouts. |
+| ✅ | `aish_mcp/_validation.py` with shared validators (UUID, resource name, path, numeric range, env key, choice). |
+| ✅ | `aish_mcp/_redact.py` with token-redaction helpers (incl. Modal `ak-`/`as-` after security review). |
+| ✅ | `aish_mcp/_logging.py` for `AISH_LOG_LEVEL`-controlled stderr structured logging. |
+| ✅ | Google-style docstrings on every `@mcp.tool()` — FastMCP exposes these as JSON schema. |
+| ✅ | Every tool composes: validate → call → wrap error → return `_ok()`/`_err()` envelope. |
 
-Each skill: `skills/<name>/SKILL.md` + a small Python helper in `${CLAUDE_PLUGIN_ROOT}/scripts/`.
+Acceptance signal: 29 v1 requirements verified against ported code; `bandit -r aish_mcp/` reports 0 MEDIUM/HIGH.
 
 ---
 
-## Phase 5 — Slash commands & subagents
+## Phase 4 — Skills ✅
+
+| Done | Skill | What it does |
+| --- | --- | --- |
+| ✅ | `gpu-detect` | NVIDIA via `nvidia-smi`, macOS via `system_profiler`, Apple Silicon, simulated fallback, CUDA capability lookup (carries `hardware.py` logic from AIsh-v0). |
+| ✅ | `hf-env-setup` | HuggingFace identifier → license/gating check + recommended Python/torch/CUDA + Modal scaffold. |
+
+Each skill is `skills/<name>/SKILL.md` plus optional helper script.
+
+---
+
+## Phase 5 — Slash commands & subagents ✅
 
 Slash commands (flat `.md` in `commands/`):
 
-- `/aish:status` — health check across both providers
-- `/aish:deploy-gpu` — guided GPU provisioning
-- `/aish:modal-run` — one-line Modal function execution
-- `/aish:hf-setup` — HF model/dataset env setup
+- ✅ `/aish:status` — health check across both providers
+- ✅ `/aish:deploy-gpu` — guided GPU provisioning
+- ✅ `/aish:modal-run` — one-line Modal function execution
+- ✅ `/aish:hf-setup` — HF model/dataset env setup
 
 Subagents (`.md` with YAML frontmatter in `agents/`):
 
-- `gpu-operator` — capacity planning, hostnode selection, cost optimization. `tools` whitelist: `mcp:aish-tensordock:*`, no bash.
-- `ml-env-setup` — environment bring-up, version pinning, verification. `tools`: `mcp:aish-modal:*`, `mcp:aish-tensordock:list_*`, no bash.
+- ✅ `gpu-operator` — capacity planning, hostnode selection, cost optimization. `tools` whitelist: `mcp__aish-tensordock__*`, no bash.
+- ✅ `ml-env-setup` — environment bring-up, version pinning, verification. `tools`: `mcp__aish-modal__*` plus read-only `mcp__aish-tensordock__list_*`, no bash.
 
 ---
 
-## Phase 6 — Tests, CI, security tooling
+## Phase 6 — Tests, CI, security tooling ✅ (release.yml deferred)
 
-| Item |
-| --- |
-| `tests/test_tensordock.py` — unit tests for all 10 tools with `respx`-mocked httpx. Cover happy paths, 4xx classification, 5xx retries (if added), token redaction in errors. |
-| `tests/test_modal.py` — unit tests for all 18 tools with mocked `asyncio.create_subprocess_exec`. Cover timeouts, non-zero exits, missing `modal` binary. |
-| `tests/test_validation.py` — UUID / path / resource name / numeric validators. |
-| `tests/test_redact.py` — token redaction in error strings. |
-| `.github/workflows/ci.yml` — matrix py3.11/3.12 → ruff → bandit → pytest with `--cov` (fail under 70%) → `pip-audit`. |
-| `.github/workflows/release.yml` — tag-triggered, signs tag verification, generates SBOM (`cyclonedx-py`), creates GitHub Release with provenance attestation. |
-| `.github/dependabot.yml` — weekly pip ecosystem updates. |
-| `scripts/lint.sh`, `scripts/test.sh`, `scripts/audit.sh` — single-command developer entry points. |
-| `.github/ISSUE_TEMPLATE/{bug_report.md,feature_request.md,security.md}`. |
-| `.github/PULL_REQUEST_TEMPLATE.md`. |
+| Done | Item |
+| --- | --- |
+| ✅ | `tests/test_tensordock.py` — respx-mocked httpx, classification, validation, redaction. |
+| ✅ | `tests/test_modal.py` — subprocess-mocked, timeouts, non-zero exits, missing CLI. |
+| ✅ | `tests/test_tools_smoke.py` — 30 round-trip tests across every public tool. |
+| ✅ | `tests/test_validation.py` + `tests/test_redact.py` + `tests/test_no_shell_true.py`. |
+| ✅ | 113 tests passing, ≥70% coverage gate, ruff + bandit clean. |
+| ✅ | `.github/workflows/ci.yml` — matrix py3.11/3.12 → ruff → bandit → pytest+cov → pip-audit → manifest validation. |
+| ⏳ | `.github/workflows/release.yml` — tag-triggered SBOM + provenance attestation. (deferred to v0.2 — current release flow uses gh release manually.) |
+| ✅ | `.github/dependabot.yml` — weekly pip + actions updates (already filed PRs after first push). |
+| ✅ | `.github/workflows/codeql.yml` — weekly + on-PR security-extended scan. |
+| ✅ | `scripts/test.sh`, `scripts/audit.sh` — local entry points. (`scripts/lint.sh` not created — `ruff check .` is shorter.) |
+| ✅ | `.github/ISSUE_TEMPLATE/{bug_report.md,feature_request.md,security.md}` + `PULL_REQUEST_TEMPLATE.md`. |
 
 ---
 
-## Phase 7 — Submission packet
+## Phase 7 — Submission packet ✅ (signed tag deferred)
 
-| Item |
-| --- |
-| `docs/SUBMISSION.md` — checklist of how `aish` meets each item in `ANTHROPIC-PLUGIN.md` (with file:line citations). |
-| Tag `v0.1.0`, signed (`git tag -s`). |
-| GitHub Release with attached SBOM and a short changelog. |
-| Submit via `claude.ai/settings/plugins/submit` (or `platform.claude.com/plugins/submit`) referencing the v0.1.0 release. |
-| Open a tracking issue on this repo for any review feedback. |
+| Done | Item |
+| --- | --- |
+| ✅ | `docs/SUBMISSION.md` — file:line citations for every acceptance row. |
+| ⚠️ | Tag `v0.1.0` cut and pushed; **annotated, not GPG-signed** — `git tag -s` deferred until a key is provisioned. |
+| ✅ | GitHub Release published with changelog. SBOM attached in v0.2. |
+| ⏳ | Submit via `claude.ai/settings/plugins/submit` referencing the v0.1.0 release. |
+| ⏳ | Open a tracking issue for any review feedback. |
 
 ---
 
 ## Phase 8 — Post-acceptance hardening (v0.2)
 
-- Add retry-with-backoff on transient TensorDock 5xx (per gpu-cloud-mcp REL-01..05).
-- Add `--json` output parsing for Modal CLI (verify availability first — open question from prior research).
-- Add structured logging via `logging` (not print) so `AISH_LOG_LEVEL` actually works end-to-end.
-- Optional `gpu-cost-optimizer` subagent that compares TensorDock vs Modal price points.
+- Retry-with-backoff on transient TensorDock 5xx (per gpu-cloud-mcp REL-01..05).
+- `--json` output parsing for Modal CLI (verify availability first — open question from prior research).
+- `release.yml` workflow with cyclonedx SBOM and GitHub artifact attestations.
+- Hash-pinned dependencies via `uv pip compile --generate-hashes`.
+- GPG-signed git tags (provision key, then `git tag -s` for v0.2).
+- `validate_safe_path` callers add `Path.resolve().is_relative_to(allowed_root)` for symlink safety.
+- `create_secret` switches to `--from-json=<tempfile>` to avoid `ps aux` argv exposure.
+- Optional `gpu-cost-optimizer` subagent comparing TensorDock vs Modal price points.
 
 ---
 
