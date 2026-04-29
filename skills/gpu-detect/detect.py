@@ -67,7 +67,7 @@ def _detect_nvidia() -> dict | None:
     if not shutil.which("nvidia-smi"):
         return None
     try:
-        out = subprocess.run(  # noqa: S603 — list-form argv, no shell
+        out = subprocess.run(  # nosec B603 B607  # noqa: S603 — list-form argv after which() guard
             [
                 "nvidia-smi",
                 "--query-gpu=name,memory.total,driver_version",
@@ -96,7 +96,7 @@ def _detect_nvidia() -> dict | None:
     nvcc = shutil.which("nvcc")
     if nvcc:
         try:
-            nv_out = subprocess.run(  # noqa: S603
+            nv_out = subprocess.run(  # nosec B603  # noqa: S603 — absolute path from shutil.which
                 [nvcc, "--version"], capture_output=True, text=True, timeout=5, check=False
             )
             m = re.search(r"release\s+(\d+\.\d+)", nv_out.stdout or "")
@@ -121,7 +121,7 @@ def _detect_macos() -> dict | None:
     if not shutil.which("system_profiler"):
         return None
     try:
-        out = subprocess.run(  # noqa: S603
+        out = subprocess.run(  # nosec B603 B607  # noqa: S603 — list-form argv after which() guard
             ["system_profiler", "SPDisplaysDataType"],
             capture_output=True,
             text=True,
