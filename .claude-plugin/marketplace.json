@@ -1,0 +1,35 @@
+{
+  "name": "aish-marketplace",
+  "owner": {
+    "name": "Shubhankar (lonexreb)",
+    "email": "reach2shubhankar@gmail.com",
+    "url": "https://github.com/lonexreb"
+  },
+  "metadata": {
+    "description": "aish — agentic GPU cloud control plane for Claude Code.",
+    "version": "0.1.0"
+  },
+  "plugins": [
+    {
+      "name": "aish",
+      "source": ".",
+      "description": "TensorDock + Modal MCP servers, GPU detection skills, and ML workflow subagents.",
+      "version": "0.1.0",
+      "author": {
+        "name": "Shubhankar (lonexreb)"
+      },
+      "category": "developer-tools",
+      "tags": [
+        "gpu",
+        "cloud",
+        "tensordock",
+        "modal",
+        "mcp",
+        "ml",
+        "infrastructure",
+        "agents"
+      ]
+    }
+  ],
+  "strict": true
+}

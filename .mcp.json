@@ -1,0 +1,20 @@
+{
+  "mcpServers": {
+    "aish-tensordock": {
+      "command": "python3",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/mcp/tensordock_mcp_server.py"],
+      "env": {
+        "TENSORDOCK_API_TOKEN": "${TENSORDOCK_API_TOKEN}",
+        "AISH_LOG_LEVEL": "${AISH_LOG_LEVEL:-INFO}"
+      }
+    },
+    "aish-modal": {
+      "command": "python3",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/mcp/modal_mcp_server.py"],
+      "env": {
+        "AISH_LOG_LEVEL": "${AISH_LOG_LEVEL:-INFO}",
+        "PATH": "${PATH}"
+      }
+    }
+  }
+}

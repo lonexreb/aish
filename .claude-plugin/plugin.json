@@ -1,0 +1,24 @@
+{
+  "name": "aish",
+  "version": "0.1.0",
+  "description": "Agentic GPU cloud control plane for Claude Code: TensorDock + Modal MCP servers, GPU detection, and ML workflow subagents.",
+  "author": {
+    "name": "Shubhankar (lonexreb)",
+    "email": "reach2shubhankar@gmail.com",
+    "url": "https://github.com/lonexreb"
+  },
+  "homepage": "https://github.com/lonexreb/aish",
+  "repository": "https://github.com/lonexreb/aish",
+  "license": "MIT",
+  "keywords": [
+    "claude-code",
+    "claude-code-plugin",
+    "mcp",
+    "gpu",
+    "tensordock",
+    "modal",
+    "ml",
+    "infrastructure",
+    "cloud"
+  ]
+}
