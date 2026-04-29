@@ -37,8 +37,22 @@ from aish_mcp._validation import (
 
 # ── Config ────────────────────────────────────────────────────────────────────
 BASE_URL = "https://dashboard.tensordock.com/api/v2"
-GET_TIMEOUT = float(os.environ.get("AISH_HTTP_GET_TIMEOUT", "30"))
-POST_TIMEOUT = float(os.environ.get("AISH_HTTP_POST_TIMEOUT", "60"))
+def _bounded_timeout(env_key: str, default: float, minimum: float = 1.0, maximum: float = 3600.0) -> float:
+    """Read a timeout from env, clamped to a sane range. Rejects inf/nan/negative
+    so the hard-timeout STOP-SHIP guard can't be silently disabled by an env var.
+    """
+    raw = os.environ.get(env_key, str(default))
+    try:
+        val = float(raw)
+    except (TypeError, ValueError):
+        return default
+    if val != val or val == float("inf") or val < minimum or val > maximum:
+        return default
+    return val
+
+
+GET_TIMEOUT = _bounded_timeout("AISH_HTTP_GET_TIMEOUT", 30.0)
+POST_TIMEOUT = _bounded_timeout("AISH_HTTP_POST_TIMEOUT", 60.0)
 
 log = get_logger("aish.tensordock")
 
@@ -154,9 +168,11 @@ async def _get(path: str, params: dict | None = None) -> str:
     except httpx.RequestError as exc:
         log.warning("GET %s network error: %s", path, type(exc).__name__)
         return _err("network_error", None, f"Network error talking to TensorDock: {type(exc).__name__}")
-    except Exception as exc:  # noqa: BLE001 — broad catch, redaction-safe
+    except RuntimeError as exc:
+        return _err("configuration_error", None, str(exc))
+    except Exception as exc:  # noqa: BLE001
         log.exception("Unexpected error on GET %s", path)
-        return _err("internal_error", None, f"Unexpected error: {type(exc).__name__}")
+        return _err("internal_error", None, f"Unexpected error: {type(exc).__name__}: {exc}")
 
 
 async def _post(path: str, body: dict | None = None) -> str:
@@ -183,12 +199,16 @@ async def _put(path: str, body: dict | None = None) -> str:
             resp.raise_for_status()
             return _ok(resp.json())
     except httpx.HTTPStatusError as exc:
+        log.warning("PUT %s -> %d", path, exc.response.status_code)
         return _classify(exc)
     except httpx.RequestError as exc:
+        log.warning("PUT %s network error: %s", path, type(exc).__name__)
         return _err("network_error", None, f"Network error: {type(exc).__name__}")
+    except RuntimeError as exc:
+        return _err("configuration_error", None, str(exc))
     except Exception as exc:  # noqa: BLE001
         log.exception("Unexpected error on PUT %s", path)
-        return _err("internal_error", None, f"Unexpected error: {type(exc).__name__}")
+        return _err("internal_error", None, f"Unexpected error: {type(exc).__name__}: {exc}")
 
 
 async def _delete(path: str) -> str:
@@ -198,12 +218,16 @@ async def _delete(path: str) -> str:
             resp.raise_for_status()
             return _ok(resp.json())
     except httpx.HTTPStatusError as exc:
+        log.warning("DELETE %s -> %d", path, exc.response.status_code)
         return _classify(exc)
     except httpx.RequestError as exc:
+        log.warning("DELETE %s network error: %s", path, type(exc).__name__)
         return _err("network_error", None, f"Network error: {type(exc).__name__}")
+    except RuntimeError as exc:
+        return _err("configuration_error", None, str(exc))
     except Exception as exc:  # noqa: BLE001
         log.exception("Unexpected error on DELETE %s", path)
-        return _err("internal_error", None, f"Unexpected error: {type(exc).__name__}")
+        return _err("internal_error", None, f"Unexpected error: {type(exc).__name__}: {exc}")
 
 
 def _validation_error(exc: ValidationError) -> str:

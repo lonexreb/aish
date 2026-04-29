@@ -37,9 +37,22 @@ from aish_mcp._validation import (
     validate_safe_path,
 )
 
-DEFAULT_TIMEOUT = float(os.environ.get("AISH_MODAL_TIMEOUT_DEFAULT", "120"))
-DEPLOY_TIMEOUT = float(os.environ.get("AISH_MODAL_TIMEOUT_DEPLOY", "300"))
-RUN_TIMEOUT = float(os.environ.get("AISH_MODAL_TIMEOUT_RUN", "600"))
+def _bounded_timeout(env_key: str, default: float, minimum: float = 1.0, maximum: float = 3600.0) -> float:
+    """Same semantics as the TensorDock server's helper — keeps STOP-SHIP item 4
+    (hard timeouts) working even if a hostile env var is set."""
+    raw = os.environ.get(env_key, str(default))
+    try:
+        val = float(raw)
+    except (TypeError, ValueError):
+        return default
+    if val != val or val == float("inf") or val < minimum or val > maximum:
+        return default
+    return val
+
+
+DEFAULT_TIMEOUT = _bounded_timeout("AISH_MODAL_TIMEOUT_DEFAULT", 120.0)
+DEPLOY_TIMEOUT = _bounded_timeout("AISH_MODAL_TIMEOUT_DEPLOY", 300.0)
+RUN_TIMEOUT = _bounded_timeout("AISH_MODAL_TIMEOUT_RUN", 600.0)
 
 log = get_logger("aish.modal")
 
@@ -200,6 +213,11 @@ async def run_app(
             for i, a in enumerate(args):
                 if not isinstance(a, str) or len(a) > 512 or "\x00" in a:
                     raise ValidationError(f"args[{i}] must be a string <=512 chars without NUL")
+        # Reject ambiguous combination: pre-qualified path + separate function_name
+        if function_name and "::" in file_path:
+            raise ValidationError(
+                "Pass either function_name OR a file_path containing '::', not both"
+            )
         modal = _modal_bin()
     except (ValidationError, RuntimeError) as exc:
         if isinstance(exc, ValidationError):
@@ -209,7 +227,7 @@ async def run_app(
     cmd = [modal, "run"]
     if detach:
         cmd.append("--detach")
-    cmd.append(f"{file_path}::{function_name}" if function_name and "::" not in file_path else file_path)
+    cmd.append(f"{file_path}::{function_name}" if function_name else file_path)
     if args:
         cmd.extend(args)
     return _result_to_envelope(await _run(cmd, timeout=RUN_TIMEOUT))
@@ -250,6 +268,10 @@ async def app_logs(app_name: str) -> str:
             return _validation_error(exc)
         return _err("modal_cli_missing", None, str(exc))
     listing = await _run([modal, "app", "list"])
+    if listing.get("returncode") != 0:
+        # Don't masquerade an authentication or transport failure as success;
+        # surface the real error to the caller.
+        return _result_to_envelope(listing)
     return _ok(
         {
             "listing": redact(listing.get("stdout", "")),
@@ -281,8 +303,18 @@ async def shell(
         if gpu is not None:
             validate_choice(gpu.upper(), ("T4", "A10G", "A100", "L4", "H100"), "gpu")
         if image is not None:
-            if not isinstance(image, str) or len(image) > 128 or "\x00" in image:
-                raise ValidationError("image invalid")
+            import re as _re
+
+            if (
+                not isinstance(image, str)
+                or len(image) > 128
+                or "\x00" in image
+                or any(ord(c) < 0x20 for c in image)
+                or not _re.fullmatch(r"[a-zA-Z0-9][a-zA-Z0-9_.\-:/]*", image)
+            ):
+                raise ValidationError(
+                    "image must match OCI ref [a-zA-Z0-9][a-zA-Z0-9_.:-/]+ (<=128 chars, no controls)"
+                )
         if cpu is not None and not (0.1 <= float(cpu) <= 32.0):
             raise ValidationError("cpu must be in [0.1, 32.0]")
         if memory is not None:

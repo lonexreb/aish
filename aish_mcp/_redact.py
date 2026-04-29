@@ -15,10 +15,19 @@ import re
 # false-positive redaction is fine; the cost of a missed secret is high.
 _AUTH_HEADER_RE = re.compile(r"(?i)(authorization\s*:\s*bearer\s+)[A-Za-z0-9._\-+/=]{4,}")
 _BEARER_INLINE_RE = re.compile(r"(?i)(\bbearer\s+)[A-Za-z0-9._\-+/=]{4,}")
-_TOKEN_RE = re.compile(r"\b(tdk|sk|hf|wandb|gho|ghp|ghs|ghu|github_pat)_[A-Za-z0-9_\-]{16,}")
+# Common provider-prefixed tokens. Lowered min length to {6,} to catch shorter
+# TensorDock tokens; over-redaction is preferable to a miss.
+_TOKEN_RE = re.compile(r"\b(tdk|sk|hf|wandb|gho|ghp|ghs|ghu|github_pat)_[A-Za-z0-9_\-]{6,}")
+# Modal CLI prints `Token id: ak-…` and `Token secret: as-…` from `modal config show`.
+# These do not match the underscore-prefixed _TOKEN_RE; covered by their own pattern.
+_MODAL_TOKEN_RE = re.compile(r"\b(ak|as)-[A-Za-z0-9_\-]{8,}")
 _GENERIC_LONG_HEX_RE = re.compile(r"\b[A-Fa-f0-9]{32,}\b")
 _HEADER_VALUE_RE = re.compile(
     r"(?i)(x-api[-_](?:key|token)|api[-_]key|secret[-_]key)\s*:\s*\S+"
+)
+# `modal config show` lines: "Token id: ak-..." / "Token secret: as-...".
+_MODAL_CONFIG_LINE_RE = re.compile(
+    r"(?im)^(\s*token[-_ ]?(?:id|secret|key)\s*[:=]\s*)\S+", re.IGNORECASE
 )
 
 
@@ -32,7 +41,9 @@ def redact(text: str) -> str:
     text = _AUTH_HEADER_RE.sub(r"\1***REDACTED***", text)
     text = _BEARER_INLINE_RE.sub(r"\1***REDACTED***", text)
     text = _HEADER_VALUE_RE.sub(r"\1: ***REDACTED***", text)
+    text = _MODAL_CONFIG_LINE_RE.sub(r"\1***REDACTED***", text)
     text = _TOKEN_RE.sub("***REDACTED***", text)
+    text = _MODAL_TOKEN_RE.sub("***REDACTED***", text)
     text = _GENERIC_LONG_HEX_RE.sub("***REDACTED***", text)
     return text
 

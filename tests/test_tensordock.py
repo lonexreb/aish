@@ -130,11 +130,12 @@ async def test_deploy_instance_happy_path(server):
 
 
 @pytest.mark.asyncio
-async def test_missing_token_surfaces_error(server, monkeypatch):
-    # Strip the token the fixture set
+async def test_missing_token_surfaces_actionable_error(server, monkeypatch):
+    # Strip the token the fixture set; expect actionable configuration_error
+    # with the setup hint, NOT a generic internal_error.
     monkeypatch.delenv("TENSORDOCK_API_TOKEN", raising=False)
     out = json.loads(await server.list_instances())
-    # The RuntimeError is raised inside _api_token() and caught by the broad
-    # exception handler, surfaced as internal_error
     assert out["ok"] is False
-    assert out["status"] == "internal_error"
+    assert out["status"] == "configuration_error"
+    assert "TENSORDOCK_API_TOKEN" in out["message"]
+    assert "dashboard.tensordock.com/developers" in out["message"]
