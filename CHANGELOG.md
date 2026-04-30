@@ -4,6 +4,20 @@ All notable changes to this project are documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.2] — 2026-04-30
+
+Patch release. Pre-submission polish on the plugin manifests so an Anthropic marketplace reviewer sees a clearer first impression. No code or behavior change — manifests only.
+
+### Changed
+
+- **`plugin.json` description** rewritten to lead with the verb (*Provision GPU VMs (TensorDock) and run serverless GPU apps (Modal) from Claude Code …*) instead of the buzzword "Agentic". Marketplace browsers truncate to the first ~80 chars, so those chars now describe what the plugin *does* rather than what it *is*.
+- **`plugin.json` keywords** dropped redundant `claude-code` / `claude-code-plugin` entries (every entry in the marketplace is a Claude Code plugin — wasted slots) and added `huggingface`, `cuda`, `nvidia`, `serverless`, `agents` so the searchable surface matches the actual user audience. 9 → 12 keywords.
+- **`marketplace.json`** plugin entry description and tag set updated to mirror `plugin.json` so a reviewer sees one consistent first impression in both manifests.
+
+### Internal
+
+- Version bumped in `plugin.json`, `marketplace.json` (top-level metadata + plugin entry), `pyproject.toml`, and `aish_mcp/__init__.py`.
+
 ## [0.1.1] — 2026-04-29
 
 Patch release. Closes 5 HIGH-severity bugs found by an extensive multi-reviewer audit (security, python-idiom, plan-conformance) that ran post-v0.1.0. **Recommended over v0.1.0 for any new install.**
