@@ -13,7 +13,7 @@
     {
       "name": "aish",
       "source": ".",
-      "description": "TensorDock + Modal MCP servers, GPU detection skills, and ML workflow subagents.",
+      "description": "Provision GPU VMs (TensorDock) and run serverless GPU apps (Modal) from Claude Code.",
       "version": "0.1.1",
       "author": {
         "name": "Shubhankar (lonexreb)"
@@ -27,6 +27,10 @@
         "modal",
         "mcp",
         "ml",
+        "huggingface",
+        "cuda",
+        "nvidia",
+        "serverless",
         "infrastructure",
         "agents"
       ]
