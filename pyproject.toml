@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "aish"
-version = "0.1.1"
+version = "0.1.2"
 description = "Claude Code plugin: GPU cloud MCP servers (TensorDock + Modal), GPU detection skills, and ML workflow subagents."
 readme = "README.md"
 requires-python = ">=3.11,<3.13"
