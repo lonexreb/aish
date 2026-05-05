@@ -7,14 +7,14 @@
   },
   "metadata": {
     "description": "aish — agentic GPU cloud control plane for Claude Code.",
-    "version": "0.1.2"
+    "version": "0.1.3"
   },
   "plugins": [
     {
       "name": "aish",
       "source": ".",
       "description": "Provision GPU VMs (TensorDock) and run serverless GPU apps (Modal) from Claude Code.",
-      "version": "0.1.2",
+      "version": "0.1.3",
       "author": {
         "name": "Shubhankar (lonexreb)"
       },

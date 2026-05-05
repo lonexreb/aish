@@ -4,6 +4,28 @@ All notable changes to this project are documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.3] — 2026-05-05
+
+Patch release. Pre-submission dependency hygiene sweep — all eight open Dependabot PRs resolved so a marketplace reviewer sees a maintained tree, not a stale one. No code changes; only dependency floors and CI action versions move.
+
+### Changed
+
+- **`mcp[cli]`** floor `>=1.23.0` → `>=1.27.0` (4 minor releases of upstream fixes; still `<2.0`).
+- **`modal`** optional dep floor `>=0.74.5` → `>=1.4.2`. Major version jump on the Python package, but `aish_mcp/modal_mcp_server.py` shells out to the `modal` CLI binary via `asyncio.create_subprocess_exec` — no `import modal` anywhere in the code — so the API breakage in the SDK has no effect on this plugin. Floor bump is for users who `pip install aish[modal]`.
+- **`pytest-asyncio`** floor `>=0.24.0` → `>=1.3.0` (major version stabilization). All 113 tests still pass under the new floor.
+- **`ruff`** floor `>=0.7.4` → `>=0.15.12` (8 months of new lint rules; tree was already clean against them).
+- **`setuptools`** build-system floor `>=68` → `>=82.0.1` (build-only, no runtime impact).
+- **`actions/checkout`** v4 → v6 in CI workflows.
+- **`actions/setup-python`** v5 → v6 in CI workflows.
+- **`github/codeql-action`** v3 → v4 in CodeQL workflow (pre-empts the late-2026 v3 deprecation Anthropic reviewers would otherwise flag).
+
+### Verified
+
+- 113 tests passing under refreshed deps (`pytest -q`).
+- `ruff check .` clean.
+- `bandit -r aish_mcp/ skills/ --severity-level medium` reports zero MEDIUM/HIGH findings.
+- `pip-audit` reports zero known vulnerabilities across the runtime + dev + modal extras.
+
 ## [0.1.2] — 2026-04-30
 
 Patch release. Pre-submission polish on the plugin manifests so an Anthropic marketplace reviewer sees a clearer first impression. No code or behavior change — manifests only.
