@@ -30,7 +30,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-modal = ["modal>=0.74.5,<2.0"]
+modal = ["modal>=1.4.2,<2.0"]
 dev = [
     # pytest <9.0.3 has GHSA-6w46-j5rx-g56g (path-traversal in tmp_path).
     "pytest>=9.0.3,<10",
