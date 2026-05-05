@@ -19,6 +19,12 @@ Patch release. Pre-submission dependency hygiene sweep — all eight open Depend
 - **`actions/setup-python`** v5 → v6 in CI workflows.
 - **`github/codeql-action`** v3 → v4 in CodeQL workflow (pre-empts the late-2026 v3 deprecation Anthropic reviewers would otherwise flag).
 
+### Documentation
+
+- **README.md** — bumped status badge `v0.1.0` → `v0.1.3`; softened the "pinned dependencies with hashes" claim to accurately describe the floor-pinning strategy with a forward reference to v0.2 hash-pinning.
+- **docs/SUBMISSION.md** — re-titled to v0.1.3; refreshed all `.github/workflows/ci.yml` line citations (which shifted with the GitHub Actions bumps); refreshed `tests/test_no_shell_true.py` line citations after the prior `_shipped_python_files()` refactor; updated submission-tag reference to `v0.1.3`.
+- **ANTHROPIC-PLUGIN.md** — refreshed `.mcp.json` example to include `AISH_LOG_LEVEL` (matches what actually ships); refreshed the keywords/tags examples to the current 12-entry sets; rewrote the Supply chain table to mark `pip-audit`, `bandit`, Dependabot, and CodeQL as **done** (they were previously listed as "scheduled phase 6" — drift from when CI was still being built); added a 2026-05-05 decision-log entry recording this hygiene sweep.
+
 ### Verified
 
 - 113 tests passing under refreshed deps (`pytest -q`).

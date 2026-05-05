@@ -5,7 +5,7 @@
 <p align="center">
   <a href="https://github.com/lonexreb/aish/blob/main/LICENSE"><img alt="MIT License" src="https://img.shields.io/badge/license-MIT-7dd3fc?style=for-the-badge"></a>
   <img alt="Python" src="https://img.shields.io/badge/python-3.11%2B-a78bfa?style=for-the-badge">
-  <img alt="Status" src="https://img.shields.io/badge/status-alpha%20v0.1.0-fb7185?style=for-the-badge">
+  <img alt="Status" src="https://img.shields.io/badge/status-alpha%20v0.1.3-fb7185?style=for-the-badge">
   <img alt="Plugin" src="https://img.shields.io/badge/claude--code-plugin-94a3b8?style=for-the-badge">
 </p>
 
@@ -128,7 +128,7 @@ aish is built to the [STOP-SHIP security checklist](./ANTHROPIC-PLUGIN.md#stop-s
 - **Strict input validation** at every MCP tool boundary — UUIDs are regex-checked, paths are resolved and re-checked against an allowlist, numeric ranges are enforced.
 - **Hard timeouts** on every HTTP call (30/60s) and every subprocess (120-600s with `proc.kill()` + `await proc.wait()` on timeout).
 - **No `PreToolUse` hooks that mutate input.** No `SessionStart` side effects. Install is side-effect-free.
-- **Pinned dependencies** with hashes; CI runs `pip-audit` and `bandit` on every PR.
+- **Dependency floors pinned past known CVEs** (`>=X,<MAJOR+1` ranges so Dependabot can patch in-range); CI runs `pip-audit` and `bandit` on every PR. Hash-pinning + signed releases are scheduled for v0.2 (see [`PLAN.md`](./PLAN.md) Phase 7).
 
 Full security model: [`ANTHROPIC-PLUGIN.md`](./ANTHROPIC-PLUGIN.md). Disclosure policy: [`SECURITY.md`](./SECURITY.md).
 

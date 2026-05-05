@@ -1,4 +1,4 @@
-# SUBMISSION.md — `aish` v0.1.0
+# SUBMISSION.md — `aish` v0.1.3
 
 > One-page checklist for the Anthropic plugin marketplace reviewer.
 
@@ -18,12 +18,12 @@ This document maps every acceptance criterion in [`ANTHROPIC-PLUGIN.md`](../ANTH
 
 | # | Item | Implementation | Verification |
 | --- | --- | --- | --- |
-| 1 | No `shell=True` anywhere | `aish_mcp/modal_mcp_server.py:105` (`asyncio.create_subprocess_exec(*argv, …)`) | `tests/test_no_shell_true.py:21,31` (regex meta-test scans `aish_mcp/`, `skills/`, `scripts/` — guarded by `_shipped_python_files()` which fails the test if any dir is empty) + CI `name: No-shell=True guard` step in `.github/workflows/ci.yml:49` |
+| 1 | No `shell=True` anywhere | `aish_mcp/modal_mcp_server.py:105` (`asyncio.create_subprocess_exec(*argv, …)`) | `tests/test_no_shell_true.py:13,28,40` (regex meta-test scans `aish_mcp/`, `skills/`, `scripts/` — guarded by `_shipped_python_files()` which fails the test if any dir is empty) + CI `name: No-shell=True guard` step in `.github/workflows/ci.yml:51` |
 | 2 | Bearer tokens redacted in every error path | `aish_mcp/_redact.py:16,17,20,23,24,25-27,29-31` (7 redaction patterns: auth header, inline bearer, `tdk_*/sk_*/hf_*/...`, Modal `ak-/as-`, hex blob, `X-Api-Key`, Modal config-show line) | `tests/test_redact.py` 13 tests covering each shape + idempotence |
 | 3 | Strict input validation at every tool boundary | `aish_mcp/_validation.py:26,33,42,51,60,77,107` (UUID/name/gpu/envkey/range/path/choice) | `tests/test_validation.py` 22 tests + 56 parametric cases |
 | 4 | Hard timeouts + zombie kill on subprocess | `aish_mcp/modal_mcp_server.py:99-124` (`_run` with `asyncio.wait_for` → `TimeoutError` → `proc.kill()` + `await proc.wait()`); env timeouts go through `_bounded_timeout` (line 42) which rejects inf/nan/negative | `tests/test_modal.py::test_timeout_kills_and_returns_typed_error` |
 | 5 | Env-var-only secrets + startup validation | `aish_mcp/tensordock_mcp_server.py:72-82` (`_api_token()` raises `RuntimeError` if missing); `RuntimeError` is caught in every helper and surfaced as `configuration_error` not generic internal_error | `.gitignore:2-7` blocks `.env`, `.env.*`, `*.pem`, `*.key`, `*.token`; `.env.example` is the only `.env*` file in the repo; `tests/test_tensordock.py::test_missing_token_surfaces_actionable_error` |
-| 6 | `pip-audit` + `bandit` blocking in CI | `.github/workflows/ci.yml:41-42` (bandit), `.github/workflows/ci.yml:53-67` (pip-audit job) | bandit reports 0 MEDIUM, 0 HIGH; pip-audit reports 0 CVEs after 2026-04-29 dep bump |
+| 6 | `pip-audit` + `bandit` blocking in CI | `.github/workflows/ci.yml:41,44` (bandit, with `--severity-level medium`), `.github/workflows/ci.yml:55-69` (pip-audit job) | bandit reports 0 MEDIUM, 0 HIGH; pip-audit reports 0 CVEs after 2026-05-05 dep bump (v0.1.3) |
 | 7 | No `PreToolUse` input-mutation hooks; no `CLAUDE_ENV_FILE` writes | No `hooks/` directory shipped | [`ANTHROPIC-PLUGIN.md` decision log §12](../ANTHROPIC-PLUGIN.md#12-decision-log) |
 | 8 | `SessionStart` hook absent — install side-effect-free | No `hooks/` directory shipped | [`ANTHROPIC-PLUGIN.md` decision log §12](../ANTHROPIC-PLUGIN.md#12-decision-log) |
 
@@ -73,7 +73,7 @@ Test files:
 
 | Workflow | What it does |
 | --- | --- |
-| [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) | py3.11 + py3.12 matrix → ruff (line 38) → bandit (line 41) → pytest+cov (line 44) → shell=True grep (line 49) → pip-audit (separate job, line 53) → plugin-manifest validation (line 70) |
+| [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) | py3.11 + py3.12 matrix → ruff (line 38) → bandit `--severity-level medium` (line 41) → pytest+cov (line 46) → shell=True grep (line 51) → pip-audit (separate job, line 55) → plugin-manifest validation (line 71); all uses `actions/checkout@v6`, `actions/setup-python@v6` after v0.1.3 |
 | [`.github/workflows/codeql.yml`](../.github/workflows/codeql.yml) | weekly + on-PR Python `security-extended` query pack |
 | [`.github/dependabot.yml`](../.github/dependabot.yml) | weekly pip + github-actions updates |
 
@@ -111,5 +111,5 @@ Test files:
 When ready: open the form at [`claude.ai/settings/plugins/submit`](https://claude.ai/settings/plugins/submit) (or [`platform.claude.com/plugins/submit`](https://platform.claude.com/plugins/submit)) and reference:
 
 - Repo: `https://github.com/lonexreb/aish`
-- Tag: `v0.1.0` (annotated; GPG-signed planned for v0.2 — see PLAN Phase 7)
+- Tag: `v0.1.3` (annotated; GPG-signed planned for v0.2 — see PLAN Phase 7)
 - This file: `https://github.com/lonexreb/aish/blob/main/docs/SUBMISSION.md`

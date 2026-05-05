@@ -33,13 +33,13 @@ References:
 | Field | Required | aish value | Notes |
 | --- | --- | --- | --- |
 | `name` | yes | `aish` | kebab-case, must be globally unique within the marketplace it's published in |
-| `version` | de-facto | `0.1.0` | semver; technically optional but every reviewable plugin pins one. Without it, `/plugin update` cannot work and reviewers cannot diff releases |
+| `version` | de-facto | `0.1.3` | semver; technically optional but every reviewable plugin pins one. Without it, `/plugin update` cannot work and reviewers cannot diff releases |
 | `description` | yes | one-liner | shown in plugin manager |
 | `author` | recommended | object with name/email/url | establishes accountability |
 | `homepage` | recommended | repo URL | |
 | `repository` | recommended | repo URL | string form (most plugins use string, not the npm-style object) |
 | `license` | recommended | `MIT` | SPDX id; proprietary licenses are not accepted |
-| `keywords` | optional | `["claude-code", "claude-code-plugin", "mcp", "gpu", ...]` | improves discoverability |
+| `keywords` | optional | `["mcp", "gpu", "tensordock", "modal", "ml", "huggingface", "cuda", "nvidia", "serverless", "infrastructure", "cloud", "agents"]` (12) | improves discoverability; v0.1.2 dropped redundant `claude-code*` entries |
 
 ### 2.2 `.claude-plugin/marketplace.json`
 
@@ -49,14 +49,14 @@ References:
 {
   "name": "aish-marketplace",
   "owner": { "name": "...", "email": "...", "url": "..." },
-  "metadata": { "description": "...", "version": "0.1.0" },
+  "metadata": { "description": "...", "version": "0.1.3" },
   "plugins": [{
     "name": "aish",
     "source": ".",
     "description": "...",
-    "version": "0.1.0",
+    "version": "0.1.3",
     "category": "developer-tools",
-    "tags": ["gpu", "cloud", "tensordock", "modal", "mcp", "ml"]
+    "tags": ["gpu", "cloud", "tensordock", "modal", "mcp", "ml", "huggingface", "cuda", "nvidia", "serverless", "infrastructure", "agents"]
   }],
   "strict": true
 }
@@ -74,12 +74,18 @@ References:
     "aish-tensordock": {
       "command": "python3",
       "args": ["${CLAUDE_PLUGIN_ROOT}/aish_mcp/tensordock_mcp_server.py"],
-      "env": { "TENSORDOCK_API_TOKEN": "${TENSORDOCK_API_TOKEN}" }
+      "env": {
+        "TENSORDOCK_API_TOKEN": "${TENSORDOCK_API_TOKEN}",
+        "AISH_LOG_LEVEL": "${AISH_LOG_LEVEL:-INFO}"
+      }
     },
     "aish-modal": {
       "command": "python3",
       "args": ["${CLAUDE_PLUGIN_ROOT}/aish_mcp/modal_mcp_server.py"],
-      "env": { "PATH": "${PATH}" }
+      "env": {
+        "AISH_LOG_LEVEL": "${AISH_LOG_LEVEL:-INFO}",
+        "PATH": "${PATH}"
+      }
     }
   }
 }
@@ -159,14 +165,14 @@ Exit-code semantics inversion is a documented Claude Code footgun: code `2` bloc
 
 | Control | aish status |
 | --- | --- |
-| Pin all deps with hashes (`uv pip compile --generate-hashes` or `pip-compile --generate-hashes`) | scheduled phase 6 |
-| `pip-audit` in CI on every PR; fail on known CVEs | scheduled phase 6 |
-| `bandit -r aish_mcp/ src/` in CI; fail on HIGH severity | scheduled phase 6 |
-| Pin Python in `pyproject.toml` to `>=3.11,<3.13` | done |
-| Sign release tags (`git tag -s`); upload SBOM (`cyclonedx-py`) to GitHub Release | scheduled phase 7 |
-| Generate provenance attestation via [GitHub Attestations](https://docs.github.com/en/actions/security-guides/using-artifact-attestations-to-establish-provenance-for-builds) | scheduled phase 7 |
-| Dependabot weekly for `pip` ecosystem | scheduled phase 6 |
-| CodeQL enabled for Python | scheduled phase 6 |
+| Pin all deps with hashes (`uv pip compile --generate-hashes` or `pip-compile --generate-hashes`) | scheduled phase 7 (v0.2). Today: floors pinned past known CVEs with `>=X,<MAJOR+1` ranges so Dependabot can patch in-range. |
+| `pip-audit` in CI on every PR; fail on known CVEs | **done** — `.github/workflows/ci.yml:55-69` (separate `audit` job). Reports 0 CVEs as of v0.1.3. |
+| `bandit -r aish_mcp/ skills/` in CI; fail on MEDIUM+ severity | **done** — `.github/workflows/ci.yml:41,44` with `--severity-level medium`. Intentional LOW S603/S607 in `skills/gpu-detect/detect.py` are suppressed via `pyproject.toml` `[tool.ruff.lint.per-file-ignores]` (after a `shutil.which()` guard). |
+| Pin Python in `pyproject.toml` to `>=3.11,<3.13` | **done** |
+| Sign release tags (`git tag -s`); upload SBOM (`cyclonedx-py`) to GitHub Release | scheduled phase 7 (v0.2) |
+| Generate provenance attestation via [GitHub Attestations](https://docs.github.com/en/actions/security-guides/using-artifact-attestations-to-establish-provenance-for-builds) | scheduled phase 7 (v0.2) |
+| Dependabot weekly for `pip` + `github-actions` ecosystems | **done** — `.github/dependabot.yml`. Eight PRs from the first batch were merged in v0.1.3. |
+| CodeQL enabled for Python (`security-extended` query pack) | **done** — `.github/workflows/codeql.yml`, runs weekly + on PR. Uses `github/codeql-action@v4` after v0.1.3. |
 
 `uv pip compile --exclude-newer` may be added later to put a one-week embargo on freshly-published packages (defense against day-zero malicious-package publishes).
 
@@ -232,6 +238,7 @@ Restart Claude Code after any of the above so the bundled stdio MCP servers boot
 | 2026-04-29 | No hooks in v1 | The Claude Code hook surface has known footguns (input mutation invisibility, `SessionStart` env poisoning, exit-code inversion). v1 has no need for hooks; adding any will require explicit ANTHROPIC-PLUGIN.md update. |
 | 2026-04-29 | Bundle MCP via stdio subprocess (not HTTP) | Stdio matches Claude Code's primary transport, avoids hosting a public endpoint and the auth/SSRF surface that comes with one. |
 | 2026-04-29 | Single-plugin marketplace with `strict: true` | No surprise inline tools defined only in `marketplace.json`. Components must come from the plugin's actual files, which are reviewable in git. |
+| 2026-05-05 | Pre-submission dependency hygiene sweep (v0.1.3) — bumped `mcp` 1.23→1.27, `modal` 0.74→1.4 (CLI-only, no `import modal`), `pytest-asyncio` 0.24→1.3, `ruff` 0.7→0.15, `setuptools` 68→82, `actions/checkout` v4→v6, `actions/setup-python` v5→v6, `github/codeql-action` v3→v4 | Reviewers should see a maintained dependency tree, not stale floors. The `codeql-action` v3 bump pre-empts the late-2026 deprecation specifically. The `modal` major-version jump is safe because `aish_mcp/modal_mcp_server.py` shells out to the `modal` CLI binary; no `import modal` anywhere in the code, so SDK API breakage has no runtime impact. |
 
 Add a row whenever you change a security-relevant control or scope decision. The decision log is part of the submission packet.
 
